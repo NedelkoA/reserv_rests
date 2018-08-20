@@ -4,6 +4,12 @@ from django.core.validators import MinValueValidator, RegexValidator
 
 
 class Restaurant(models.Model):
+    user = models.ForeignKey(
+        User,
+        models.PROTECT,
+        related_name='articles',
+        default=None
+    )
     title = models.CharField(max_length=64)
     number_tables = models.IntegerField(validators=[
         MinValueValidator(5)
@@ -39,9 +45,20 @@ class Reservation(models.Model):
         related_name='reservations'
     )
 
+    def __str__(self):
+        return self.restaurant.name + self.date
+
 
 class UserProfile(models.Model):
     user = models.ForeignKey(User, models.CASCADE)
+    status_user = models.CharField(
+        default='usr',
+        max_length=20,
+        choices=[
+            ('usr', 'Client'),
+            ('rst_adm', 'Restaurant admin')
+        ]
+    )
     telephone = models.CharField(
         max_length=13,
         validators=[
