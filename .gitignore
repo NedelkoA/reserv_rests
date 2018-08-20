@@ -1,0 +1,21 @@
+### Django ###
+*.log
+*.pot
+*.pyc
+__pycache__/
+local_settings.py
+db.sqlite3
+media
+
+### Python ###
+*.py[cod]
+*$py.class
+
+###PyCharm###
+.idea/
+
+# Environments
+.env
+.venv
+env/
+venv/
