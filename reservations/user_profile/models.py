@@ -11,7 +11,7 @@ class UserProfile(models.Model):
     )
     status_user = models.CharField(
         default='usr',
-        max_length=20,
+        max_length=20, #delete
         choices=[
             ('usr', 'Client'),
             ('rst_adm', 'Restaurant admin')

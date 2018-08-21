@@ -25,7 +25,13 @@ class ReservationForm(forms.ModelForm):
 
     class Meta:
         model = Reservation
-        fields = ['date', 'time', 'visitors', 'table', 'contact_telephone']
+        fields = (
+            'date',
+            'time',
+            'visitors',
+            'table',
+            'contact_telephone'
+        )
         widgets = {
             'date': forms.DateInput(
                 attrs={

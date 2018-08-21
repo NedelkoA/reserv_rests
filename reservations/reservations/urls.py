@@ -20,4 +20,5 @@ from django.urls import path
 urlpatterns = [
     path('admin/', admin.site.urls),
     url(r'^', include('main.urls')),
+    url(r'^profile/', include('user_profile.urls')),
 ]
