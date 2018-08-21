@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <p>Make reservation in {{ object.title }}</p>
+    <form action="{% url 'make_reserve' object.id %}" method="POST">
+        {% csrf_token %}
+        {{ form }}
+        <button type="submit">Reserve</button>
+    </form>
+    {% if messages %}
+        <div class="error">
+            {% for message in messages %}
+                {{ message }}<br>
+            {% endfor %}
+        </div>
+    {% endif %}
+    </div>
+        {% for reservation in reservations %}
+            Table {{ reservation.table }} in {{ reservation.date|date:"d.m.Y" }} {{ reservation.time|time:"H:i" }} is reserved<br>
+        {% endfor %}
+</body>
+</html>

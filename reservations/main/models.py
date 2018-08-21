@@ -6,14 +6,16 @@ from django.core.validators import MinValueValidator, RegexValidator
 class Restaurant(models.Model):
     user = models.ForeignKey(
         User,
-        models.PROTECT,
+        on_delete=models.PROTECT,
         related_name='articles',
         default=None
     )
     title = models.CharField(max_length=64)
-    number_tables = models.IntegerField(validators=[
-        MinValueValidator(5)
-    ])
+    number_tables = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(5)]
+    )
+    open_time = models.CharField(max_length=5)
+    close_time = models.CharField(max_length=5)
 
     class Meta:
         verbose_name = 'restaurant'
@@ -26,8 +28,11 @@ class Restaurant(models.Model):
 class Reservation(models.Model):
     date = models.DateField()
     time = models.TimeField()
-    table = models.IntegerField()
-    visitors = models.IntegerField(
+    table = models.PositiveSmallIntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    visitors = models.PositiveSmallIntegerField(
+        default=1,
         validators=[
             MinValueValidator(1)
         ]
@@ -41,32 +46,24 @@ class Reservation(models.Model):
     )
     restaurant = models.ForeignKey(
         Restaurant,
-        models.CASCADE,
+        on_delete=models.CASCADE,
         related_name='reservations'
     )
 
     def __str__(self):
-        return self.restaurant.name + self.date
+        return self.restaurant.title + ' ' + str(self.date)
 
 
-class UserProfile(models.Model):
-    user = models.ForeignKey(User, models.CASCADE)
-    status_user = models.CharField(
-        default='usr',
-        max_length=20,
-        choices=[
-            ('usr', 'Client'),
-            ('rst_adm', 'Restaurant admin')
-        ]
+class Table(models.Model):
+    numb = models.PositiveSmallIntegerField()
+    count_sits = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(2)]
     )
-    telephone = models.CharField(
-        max_length=13,
-        validators=[
-            RegexValidator('^\+380\d{9}$',
-                           'Phone number must be entered in the format: \'+380xxxxxxxxx\'.')
-        ]
+    restaurant = models.OneToOneField(
+        Restaurant,
+        on_delete=models.CASCADE,
+        primary_key=True
     )
 
     def __str__(self):
-        return self.user.username
-
+        return self.restaurant.title + self.numb
