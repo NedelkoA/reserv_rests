@@ -8,7 +8,9 @@
     <p>Username: {{ object.username }} </p>
     <form action="{% url 'save_changes' object.id %}" method="POST">
         {% csrf_token %}
+        {{ user_profile.management_form }}
         {{ form.as_p }}
+        {{ user_profile.as_p }}
         <button type="submit">Save</button>
     </form>
 </body>

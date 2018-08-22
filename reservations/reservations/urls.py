@@ -21,4 +21,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     url(r'^', include('main.urls')),
     url(r'^profile/', include('user_profile.urls')),
+    url(r'^my_restaurant/', include('restaur_admin.urls')),
 ]

@@ -1,10 +1,11 @@
 from django.urls import reverse
+from django.db import transaction
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.views import LoginView
 from django.views.generic import CreateView, UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 
-from .forms import SignUpForm, SettingsForm, UserProfileFormSet
+from .forms import SignUpForm, UserProfileFormSet
 from .models import UserProfile, User
 
 
@@ -35,28 +36,30 @@ class SignUpView(CreateView):
 
 class SaveSettingsView(LoginRequiredMixin, UpdateView):
     model = User
-    form_class = SettingsForm
+    fields = (
+        'first_name',
+        'last_name',
+        'email',
+    )
     template_name = 'user_profile/settings.html'
     login_url = 'login'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # profile = UserProfile.objects.get(user=self.get_object())
-        # context['form'] = SettingsForm(
-        #     instance=self.get_object(),
-        #     initial={
-        #         'telephone': profile.telephone,
-        #         'status_user': profile.status_user
-        #     }
-        # )
-        context['form'] = UserProfileFormSet(instance=self.get_object())
+        if self.request.POST:
+            context['user_profile'] = UserProfileFormSet(self.request.POST, instance=self.get_object())
+        else:
+            context['user_profile'] = UserProfileFormSet(instance=self.get_object())
         return context
 
     def form_valid(self, form):
-        profile = UserProfile.objects.get(user=self.get_object())
-        profile.telephone = form.cleaned_data['telephone']
-        profile.status_user = form.cleaned_data['status_user']
-        profile.save()
+        context = self.get_context_data()
+        profile = context['user_profile']
+        with transaction.atomic():
+            self.object = form.save()
+            if profile.is_valid():
+                profile.instance = self.object
+                profile.save()
         return super().form_valid(form)
 
     def get_success_url(self):

@@ -17,30 +17,19 @@ class SignUpForm(UserCreationForm):
 
 
 class SettingsForm(forms.ModelForm):
-    telephone = forms.CharField(max_length=13, required=False)
-    status_user = forms.ChoiceField(
-        choices=[
-            ('usr', 'Client'),
-            ('rst_adm', 'Restaurant admin')
-        ]
-    )
-
     class Meta:
-        model = User
+        model = UserProfile
         fields = (
-            'first_name',
-            'last_name',
-            'email',
+            'telephone',
+            'status_user',
         )
 
 
 UserProfileFormSet = inlineformset_factory(
     User,
     UserProfile,
-    fields=(
-        'telephone',
-        'status_user',
-    ),
-    can_delete=False
+    form=SettingsForm,
+    can_delete=False,
+    extra=1
 )
 

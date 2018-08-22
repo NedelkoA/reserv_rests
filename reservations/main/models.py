@@ -66,4 +66,4 @@ class Table(models.Model):
     )
 
     def __str__(self):
-        return self.restaurant.title + self.numb
+        return self.restaurant.title + str(self.numb)
