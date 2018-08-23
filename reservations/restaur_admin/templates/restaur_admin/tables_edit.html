@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div class="add-table">
+    <h4>Add tables:</h4>
+    <form action="{% url 'create_table' object.id %}" method="POST">
+        {% csrf_token %}
+        <p>{{ add_form }}</p>
+        <button type="submit">Add table</button>
+    </form>
+</div>
+<div class="edit-table">
+    <h4>Edit tables:</h4>
+    <form method="POST">
+        {% csrf_token %}
+        {{ enum_tables.management_form }}
+        {% for form in enum_tables.forms %}
+            <p>{{ form }}</p>
+        {% endfor %}
+        <button type="submit">Save changes</button>
+    </form>
+</div>
+<div class="delete-table">
+    <h4>Delete tables:</h4>
+    {% for table in objects_list %}
+        <form action="{% url 'delete_table' table.id %}" method="POST">
+            {% csrf_token %}
+            <p>
+                Table {{ table.numb }}
+                <button type="submit">Delete</button>
+            </p>
+        </form>
+    {% endfor %}
+</div>
+</body>
+</html>

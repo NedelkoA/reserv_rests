@@ -1,4 +1,5 @@
 from django.urls import reverse
+from django.shortcuts import redirect
 from django.db import transaction
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.views import LoginView
@@ -43,6 +44,12 @@ class SaveSettingsView(LoginRequiredMixin, UpdateView):
     )
     template_name = 'user_profile/settings.html'
     login_url = 'login'
+
+    def get(self, request, *args, **kwargs):
+        obj = self.get_object()
+        if obj != self.request.user:
+            return redirect('/restaurants_list/')
+        return super().get(request, args, kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

@@ -59,10 +59,10 @@ class Table(models.Model):
     count_sits = models.PositiveSmallIntegerField(
         validators=[MinValueValidator(2)]
     )
-    restaurant = models.OneToOneField(
+    restaurant = models.ForeignKey(
         Restaurant,
         on_delete=models.CASCADE,
-        primary_key=True
+        null=True
     )
 
     def __str__(self):

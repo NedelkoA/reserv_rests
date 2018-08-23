@@ -11,6 +11,7 @@
         {{ form }}
         <button type="submit">Reserve</button>
     </form>
+
     {% if messages %}
         <div class="error">
             {% for message in messages %}
@@ -22,5 +23,30 @@
         {% for reservation in reservations %}
             Table {{ reservation.table }} in {{ reservation.date|date:"d.m.Y" }} {{ reservation.time|time:"H:i" }} is reserved<br>
         {% endfor %}
+<script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+<script type="text/javascript">
+    $("#id_date").change(function () {
+      var date = $(this).val();
+      $.ajax({
+        url: window.location.href,
+        type: "GET",
+        data: {
+          'date': date
+        },
+        dataType: 'json',
+        success: function (data) {
+          if (data.reserve) {
+            console.log(data['reserve']);
+            $.each(data['reserve'], function(key, value) {
+                $("#id_time option[value='"+value['time'].slice(0, -3)+"']").each(function() {
+                    $(this).remove()
+                });
+            });
+          }
+        }
+      });
+
+    });
+</script>
 </body>
 </html>

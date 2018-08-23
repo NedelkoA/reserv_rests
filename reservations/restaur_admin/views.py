@@ -1,13 +1,14 @@
 from django.urls import reverse
-from django.db import transaction
-from django.views.generic import CreateView, UpdateView
-from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.shortcuts import redirect
+from django.views.generic import CreateView, UpdateView, DeleteView
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 from main.models import Restaurant, User, Table
-from .forms import TableFormset
+from user_profile.models import UserProfile
+from .forms import TableFormset, TableForm
 
 
-class AddRestaurantView(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
+class AddRestaurantView(LoginRequiredMixin, CreateView):
     model = Restaurant
     fields = (
         'title',
@@ -16,18 +17,32 @@ class AddRestaurantView(LoginRequiredMixin, PermissionRequiredMixin, CreateView)
         'close_time',
     )
     login_url = 'login'
-    permission_required = 'main.add_restaurant'
     template_name = 'restaur_admin/restaurant_create.html'
+
+    def get(self, request, *args, **kwargs):
+        profile = UserProfile.objects.get(user=self.request.user)
+        if profile.status_user == 'rst_adm':
+            return super().get(request, args, kwargs)
+        return redirect('/restaurants_list/')
 
     def form_valid(self, form):
         form.instance.user = User.objects.get(id=self.request.user.id)
-        return super().form_valid(form)
+        restaurant = form.save()
+        Table.objects.bulk_create([
+            Table(
+                numb=number_table,
+                count_sits=2,
+                restaurant=restaurant
+            )
+            for number_table in range(1, restaurant.number_tables + 1)
+        ])
+        return redirect(reverse('table', kwargs={'pk': restaurant.id}))
 
     def get_success_url(self):
         return reverse('table', kwargs={'pk': self.object.id})
 
 
-class AddTableView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
+class EditTableView(LoginRequiredMixin, UpdateView):
     model = Restaurant
     fields = (
         'title',
@@ -35,32 +50,69 @@ class AddTableView(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
         'open_time',
         'close_time',
     )
-    login_url = 'login'
-    permission_required = 'main.add_table'
-    template_name = 'restaur_admin/table_create.html'
+    template_name = 'restaur_admin/tables_edit.html'
 
     def get_context_data(self, **kwargs):
+        obj = self.get_object()
         context = super().get_context_data(**kwargs)
-        restaurant = Restaurant.objects.get(id=self.kwargs['pk'])
-        TableFormset.max_num = restaurant.number_tables
-        TableFormset.extra = restaurant.number_tables
         if self.request.POST:
-            context['enum_tables'] = TableFormset(self.request.POST, instance=self.get_object())
+            context['enum_tables'] = TableFormset(
+                self.request.POST,
+                instance=obj
+            )
+            if context['enum_tables'].is_valid():
+                context['enum_tables'].save()
         else:
-            context['enum_tables'] = TableFormset(instance=self.get_object())
+            context['enum_tables'] = TableFormset(
+                instance=obj
+            )
+        context['objects_list'] = Table.objects.filter(restaurant=obj)
+        context['add_form'] = TableForm()
         return context
 
-    def form_valid(self, form):
-        context = self.get_context_data()
-        tables = context['enum_tables']
-        print(tables)
-        restaurant = Restaurant.objects.get(id=self.kwargs['pk'])
-        with transaction.atomic():
-            self.object = form.save()
-            if tables.is_valid():
-                tables.instance = self.object
-                tables.save()
-        return super().form_valid(form)
+    def get(self, request, *args, **kwargs):
+        obj = self.get_object()
+        if obj.user != self.request.user:
+            return redirect('/restaurants_list/')
+        return super().get(request, args, kwargs)
 
     def get_success_url(self):
         return reverse('table', kwargs={'pk': self.kwargs['pk']})
+
+
+class AddTableView(LoginRequiredMixin, CreateView):
+    model = Table
+    fields = (
+        'numb',
+        'count_sits',
+    )
+    login_url = 'login'
+
+    def form_valid(self, form):
+        restaurant_object = Restaurant.objects.get(id=self.kwargs['pk'])
+        form.instance.restaurant = restaurant_object
+        restaurant_object.number_tables = restaurant_object.number_tables + 1
+        restaurant_object.save()
+        return super().form_valid(form)
+
+    def get(self, request, *args, **kwargs):
+        obj = Restaurant.objects.get(id=kwargs['pk'])
+        if obj.user != self.request.user:
+            return redirect('/restaurants_list/')
+        return super().get(request, args, kwargs)
+
+    def get_success_url(self):
+        return reverse('table', kwargs={'pk': self.kwargs['pk']})
+
+
+class RemoveTableView(LoginRequiredMixin, DeleteView):
+    model = Table
+
+    def get(self, request, *args, **kwargs):
+        obj = self.get_object()
+        if obj.restaurant.user != self.request.user:
+            return redirect('/restaurants_list/')
+        return super().get(request, args, kwargs)
+
+    def get_success_url(self):
+        return reverse('table', kwargs={'pk': self.get_object().restaurant.id})
