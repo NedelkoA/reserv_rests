@@ -4,18 +4,19 @@ from django.core.validators import MinValueValidator, RegexValidator
 
 
 class Restaurant(models.Model):
-    user = models.ForeignKey(
+    user = models.OneToOneField(
         User,
-        on_delete=models.PROTECT,
-        related_name='articles',
-        default=None
+        on_delete=models.CASCADE
     )
-    title = models.CharField(max_length=64)
-    number_tables = models.PositiveSmallIntegerField(
+    title = models.CharField(
+        max_length=64,
+        unique=True
+    )
+    number_of_tables = models.PositiveSmallIntegerField(
         validators=[MinValueValidator(5)]
     )
-    open_time = models.CharField(max_length=5)
-    close_time = models.CharField(max_length=5)
+    open_time = models.TimeField()
+    close_time = models.TimeField()
 
     class Meta:
         verbose_name = 'restaurant'
@@ -25,10 +26,33 @@ class Restaurant(models.Model):
         return self.title
 
 
+class Table(models.Model):
+    table_number = models.PositiveSmallIntegerField()
+    number_of_seats = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(2)]
+    )
+    restaurant = models.ForeignKey(
+        Restaurant,
+        on_delete=models.CASCADE
+    )
+
+    class Meta:
+        unique_together = (
+            'table_number',
+            'restaurant',
+        )
+
+    def __str__(self):
+        return self.restaurant.title + ' #' + str(self.table_number)
+
+
 class Reservation(models.Model):
     date = models.DateField()
     time = models.TimeField()
-    table = models.PositiveSmallIntegerField()
+    table = models.ForeignKey(
+        Table,
+        on_delete=models.DO_NOTHING
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     visitors = models.PositiveSmallIntegerField(
@@ -47,23 +71,7 @@ class Reservation(models.Model):
     restaurant = models.ForeignKey(
         Restaurant,
         on_delete=models.CASCADE,
-        related_name='reservations'
     )
 
     def __str__(self):
         return self.restaurant.title + ' ' + str(self.date)
-
-
-class Table(models.Model):
-    numb = models.PositiveSmallIntegerField()
-    count_sits = models.PositiveSmallIntegerField(
-        validators=[MinValueValidator(2)]
-    )
-    restaurant = models.ForeignKey(
-        Restaurant,
-        on_delete=models.CASCADE,
-        null=True
-    )
-
-    def __str__(self):
-        return self.restaurant.title + str(self.numb)

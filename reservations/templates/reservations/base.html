@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{% static 'reservations/css/main.css' %}" type="text/css">
+    <title>{% block title %}{% endblock %}</title>
+</head>
+<body>
+    <header>
+        <p>Restaurant reservations</p>
+        <div class="navigate">
+            {% if user.is_authenticated %}
+                <span>You logged as {{ user.username }}</span>
+                <a href="{% url 'restaurants_list' %}">Home</a>
+                {% if user.profile.status_user == 'rst_adm' %}
+                    <a href="{% url 'create_restaurant' %}">Add restaurant</a>
+                {% endif %}
+                <a href="{% url 'save_changes' %}">Profile</a>
+            {% else %}
+                <a href="{% url 'sign_up' %}">Sign up</a>
+                <a href="{% url 'login' %}">Sign in</a>
+            {% endif %}
+        </div>
+    </header>
+    {% block body %}
+    {% endblock %}
+</body>
+</html>

@@ -1,5 +1,5 @@
-from django.urls import reverse
-from django.shortcuts import redirect
+from django.urls import reverse, reverse_lazy
+from django.shortcuts import get_object_or_404, redirect
 from django.db import transaction
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.views import LoginView
@@ -10,28 +10,40 @@ from .forms import SignUpForm, UserProfileFormSet
 from .models import UserProfile, User
 
 
-class MyLoginView(LoginView):
+class SignInView(LoginView):
     template_name = 'user_profile/login.html'
 
-    # def get_success_url(self):
-    #     return '/restaurants_list/'
+    def get(self, request, *args, **kwargs):
+        if self.request.user.is_authenticated:
+            return redirect(reverse('restaurants_list'))
+        return super().get(request, args, kwargs)
+
     def get_redirect_url(self):
-        return '/restaurants_list/'
+        if 'next' in self.request.GET:
+            return self.request.GET['next']
+        return reverse('restaurants_list')
 
 
 class SignUpView(CreateView):
     form_class = SignUpForm
     template_name = 'user_profile/registration.html'
-    success_url = '/restaurants_list/'
+    success_url = reverse_lazy('restaurants_list')
+
+    def get(self, request, *args, **kwargs):
+        if self.request.user.is_authenticated:
+            return redirect(reverse('restaurants_list'))
+        return super().get(request, args, kwargs)
 
     def form_valid(self, form):
         valid = super().form_valid(form)
         user = authenticate(username=form.cleaned_data.get('username'),
                             password=form.cleaned_data.get('password1'))
         login(self.request, user)
-        profile = UserProfile.objects.create(user=user)
-        profile.telephone = form.cleaned_data.get('telephone')
-        profile.save()
+        UserProfile.objects.create(
+            user=user,
+            telephone=form.cleaned_data.get('telephone'),
+            status_user=form.cleaned_data.get('status_user')
+        )
         return valid
 
 
@@ -44,19 +56,17 @@ class SaveSettingsView(LoginRequiredMixin, UpdateView):
     )
     template_name = 'user_profile/settings.html'
     login_url = 'login'
+    success_url = reverse_lazy('save_changes')
 
-    def get(self, request, *args, **kwargs):
-        obj = self.get_object()
-        if obj != self.request.user:
-            return redirect('/restaurants_list/')
-        return super().get(request, args, kwargs)
+    def get_object(self, queryset=None):
+        return get_object_or_404(User, pk=self.request.user.id)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         if self.request.POST:
-            context['user_profile'] = UserProfileFormSet(self.request.POST, instance=self.get_object())
+            context['user_profile'] = UserProfileFormSet(self.request.POST, instance=self.request.user)
         else:
-            context['user_profile'] = UserProfileFormSet(instance=self.get_object())
+            context['user_profile'] = UserProfileFormSet(instance=self.request.user)
         return context
 
     def form_valid(self, form):
@@ -68,6 +78,3 @@ class SaveSettingsView(LoginRequiredMixin, UpdateView):
                 profile.instance = self.object
                 profile.save()
         return super().form_valid(form)
-
-    def get_success_url(self):
-        return reverse('save_changes', kwargs={'pk': self.kwargs['pk']})

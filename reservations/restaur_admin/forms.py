@@ -8,8 +8,8 @@ class TableForm(forms.ModelForm):
     class Meta:
         model = Table
         fields = (
-            'numb',
-            'count_sits',
+            'table_number',
+            'number_of_seats',
         )
 
 

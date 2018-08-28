@@ -7,11 +7,11 @@ class UserProfile(models.Model):
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
-        primary_key=True
+        related_name='profile'
     )
     status_user = models.CharField(
         default='usr',
-        max_length=20, #delete
+        max_length=10,
         choices=[
             ('usr', 'Client'),
             ('rst_adm', 'Restaurant admin')
@@ -22,7 +22,8 @@ class UserProfile(models.Model):
         validators=[
             RegexValidator('^\+380\d{9}$',
                            'Phone number must be entered in the format: \'+380xxxxxxxxx\'.')
-        ]
+        ],
+        unique=True
     )
 
     def __str__(self):

@@ -6,46 +6,46 @@
 </head>
 <body>
     <p>Make reservation in {{ object.title }}</p>
-    <form action="{% url 'make_reserve' object.id %}" method="POST">
+    <form method="POST">
         {% csrf_token %}
-        {{ form }}
+        {{ form.as_p }}
         <button type="submit">Reserve</button>
     </form>
-
-    {% if messages %}
-        <div class="error">
-            {% for message in messages %}
-                {{ message }}<br>
-            {% endfor %}
-        </div>
-    {% endif %}
-    </div>
         {% for reservation in reservations %}
             Table {{ reservation.table }} in {{ reservation.date|date:"d.m.Y" }} {{ reservation.time|time:"H:i" }} is reserved<br>
         {% endfor %}
 <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
 <script type="text/javascript">
+    function request(date, time){
+        $.ajax({
+            url: window.location.href.slice(0, -7),
+            type: "GET",
+            data: {
+                'date': date,
+                'time': time
+            },
+            dataType: 'json',
+            success: function (data) {
+                if (data.reserve_tables) {
+                    console.log(data['reserve_tables']);
+                    $.each(data['reserve_tables'], function(key, value) {
+                        $("#id_table option[value='"+value['table']+"']").each(function() {
+                            $(this).remove()
+                        });
+                    });
+                }
+            }
+        });
+    }
+    $("#id_time").change(function () {
+        var time = $(this).val();
+        var date = $("#id_date").val();
+        request(date, time);
+    });
     $("#id_date").change(function () {
-      var date = $(this).val();
-      $.ajax({
-        url: window.location.href,
-        type: "GET",
-        data: {
-          'date': date
-        },
-        dataType: 'json',
-        success: function (data) {
-          if (data.reserve) {
-            console.log(data['reserve']);
-            $.each(data['reserve'], function(key, value) {
-                $("#id_time option[value='"+value['time'].slice(0, -3)+"']").each(function() {
-                    $(this).remove()
-                });
-            });
-          }
-        }
-      });
-
+        var time = $("#id_time").val();
+        var date = $(this).val();
+        request(date, time);
     });
 </script>
 </body>

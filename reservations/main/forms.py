@@ -2,7 +2,7 @@ from datetime import datetime
 
 from django import forms
 
-from .models import Reservation, Restaurant
+from .models import Reservation
 
 
 class ReservationForm(forms.ModelForm):
@@ -11,17 +11,28 @@ class ReservationForm(forms.ModelForm):
         if 'instance' in kwargs and kwargs['instance']:
             choices = [
                 (table, 'Table ' + str(table))
-                for table in range(1, kwargs['instance'].number_tables + 1)
+                for table in range(1, kwargs['instance'].number_of_tables + 1)
             ]
             self.fields['table'] = forms.ChoiceField(choices=choices)
             choices_time = [
                 ('{}:00'.format(hour), '{}:00'.format(hour))
                 for hour in range(
-                    int(str(kwargs['instance'].open_time[:2])),
-                    int(str(kwargs['instance'].close_time[:2]))
+                    int(str(kwargs['instance'].open_time)[:2]),
+                    int(str(kwargs['instance'].close_time)[:2])
                 )
             ]
             self.fields['time'] = forms.ChoiceField(choices=choices_time)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        visitors = cleaned_data.get('visitors')
+        table = cleaned_data.get('table')
+        if visitors > int(table):
+            raise forms.ValidationError(
+                'Visitors more than places on table',
+                code='invalid'
+            )
+        return cleaned_data
 
     class Meta:
         model = Reservation
@@ -37,10 +48,5 @@ class ReservationForm(forms.ModelForm):
                 attrs={
                     'type': 'date',
                     'min': str(datetime.date(datetime.today()))
-                }),
-            'visitors': forms.NumberInput(
-                attrs={
-                    'min': 1,
-                    'max': 6
                 })
         }

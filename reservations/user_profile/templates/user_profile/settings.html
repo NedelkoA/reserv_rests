@@ -1,17 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "reservations/base.html" %}
+{% block title %}Reservations{% endblock %}
+{% block body %}
     <p>Username: {{ object.username }} </p>
-    <form action="{% url 'save_changes' object.id %}" method="POST">
+    <form action="{% url 'save_changes' %}" method="POST">
         {% csrf_token %}
         {{ user_profile.management_form }}
         {{ form.as_p }}
         {{ user_profile.as_p }}
         <button type="submit">Save</button>
     </form>
-</body>
-</html>
+{% endblock %}

@@ -12,7 +12,7 @@ class AddRestaurantView(LoginRequiredMixin, CreateView):
     model = Restaurant
     fields = (
         'title',
-        'number_tables',
+        'number_of_tables',
         'open_time',
         'close_time',
     )
@@ -23,18 +23,18 @@ class AddRestaurantView(LoginRequiredMixin, CreateView):
         profile = UserProfile.objects.get(user=self.request.user)
         if profile.status_user == 'rst_adm':
             return super().get(request, args, kwargs)
-        return redirect('/restaurants_list/')
+        return redirect(reverse('restaurants_list'))
 
     def form_valid(self, form):
         form.instance.user = User.objects.get(id=self.request.user.id)
         restaurant = form.save()
         Table.objects.bulk_create([
             Table(
-                numb=number_table,
-                count_sits=2,
+                table_number=number_table,
+                number_of_seats=2,
                 restaurant=restaurant
             )
-            for number_table in range(1, restaurant.number_tables + 1)
+            for number_table in range(1, restaurant.number_of_tables + 1)
         ])
         return redirect(reverse('table', kwargs={'pk': restaurant.id}))
 
@@ -46,11 +46,17 @@ class EditTableView(LoginRequiredMixin, UpdateView):
     model = Restaurant
     fields = (
         'title',
-        'number_tables',
+        'number_of_tables',
         'open_time',
         'close_time',
     )
     template_name = 'restaur_admin/tables_edit.html'
+
+    def get(self, request, *args, **kwargs):
+        obj = self.get_object()
+        if obj.user != self.request.user:
+            return redirect(reverse('restaurants_list'))
+        return super().get(request, args, kwargs)
 
     def get_context_data(self, **kwargs):
         obj = self.get_object()
@@ -70,12 +76,6 @@ class EditTableView(LoginRequiredMixin, UpdateView):
         context['add_form'] = TableForm()
         return context
 
-    def get(self, request, *args, **kwargs):
-        obj = self.get_object()
-        if obj.user != self.request.user:
-            return redirect('/restaurants_list/')
-        return super().get(request, args, kwargs)
-
     def get_success_url(self):
         return reverse('table', kwargs={'pk': self.kwargs['pk']})
 
@@ -83,22 +83,22 @@ class EditTableView(LoginRequiredMixin, UpdateView):
 class AddTableView(LoginRequiredMixin, CreateView):
     model = Table
     fields = (
-        'numb',
-        'count_sits',
+        'table_number',
+        'number_of_seats',
     )
     login_url = 'login'
 
     def form_valid(self, form):
         restaurant_object = Restaurant.objects.get(id=self.kwargs['pk'])
         form.instance.restaurant = restaurant_object
-        restaurant_object.number_tables = restaurant_object.number_tables + 1
+        restaurant_object.number_of_tables = restaurant_object.number_of_tables + 1
         restaurant_object.save()
         return super().form_valid(form)
 
     def get(self, request, *args, **kwargs):
         obj = Restaurant.objects.get(id=kwargs['pk'])
         if obj.user != self.request.user:
-            return redirect('/restaurants_list/')
+            return redirect(reverse('restaurants_list'))
         return super().get(request, args, kwargs)
 
     def get_success_url(self):
@@ -108,11 +108,13 @@ class AddTableView(LoginRequiredMixin, CreateView):
 class RemoveTableView(LoginRequiredMixin, DeleteView):
     model = Table
 
-    def get(self, request, *args, **kwargs):
-        obj = self.get_object()
-        if obj.restaurant.user != self.request.user:
-            return redirect('/restaurants_list/')
-        return super().get(request, args, kwargs)
+    def post(self, request, *args, **kwargs):
+        restaurant = self.get_object().restaurant
+        if restaurant.user != self.request.user:
+            return redirect(reverse('restaurants_list'))
+        restaurant.number_of_tables = restaurant.number_of_tables - 1
+        restaurant.save()
+        return super().post(request, args, kwargs)
 
     def get_success_url(self):
         return reverse('table', kwargs={'pk': self.get_object().restaurant.id})

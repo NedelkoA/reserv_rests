@@ -55,7 +55,7 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'reservations.urls'
-temp = os.path.join(BASE_DIR, 'templates')
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',

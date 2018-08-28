@@ -1,27 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<header>
-    <nav>
-        {% if user.is_authenticated %}
-            <span>You logged as {{ user.username }}</span>
-            <a href="{% url 'restaurants_list' %}">Home</a>
-            <a href="{% url 'logout' %}">Logout</a>
-        {% else %}
-            <a href="{% url 'restaurants_list' %}">Home</a>
-            <a href="{% url 'login' %}">Login</a>
-            <a href="{% url 'sign_up' %}">Sign Up</a>
-        {% endif %}
-    </nav>
-</header>
-<body>
+{% extends "reservations/base.html" %}
+{% block title %}Reservations{% endblock %}
+{% block body %}
     <form method="POST">
         {% csrf_token %}
         {{ form.as_p }}
         <button type="submit">Login</button>
     </form>
-</body>
-</html>
+{% endblock %}
