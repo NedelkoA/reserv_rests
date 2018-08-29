@@ -25,6 +25,10 @@ class UserProfile(models.Model):
         ],
         unique=True
     )
+    telegram_id = models.IntegerField(
+        null=True,
+        unique=True
+    )
 
     def __str__(self):
         return self.user.username

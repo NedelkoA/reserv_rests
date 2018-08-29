@@ -2,23 +2,20 @@ from datetime import datetime
 
 from django import forms
 
-from .models import Reservation
+from .models import Reservation, Table
 
 
 class ReservationForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
+        restaurant = kwargs.pop('restaurant', None)
         super(ReservationForm, self).__init__(*args, **kwargs)
-        if 'instance' in kwargs and kwargs['instance']:
-            choices = [
-                (table, 'Table ' + str(table))
-                for table in range(1, kwargs['instance'].number_of_tables + 1)
-            ]
-            self.fields['table'] = forms.ChoiceField(choices=choices)
+        if restaurant:
+            self.fields['table'].queryset = Table.objects.filter(restaurant=restaurant)
             choices_time = [
                 ('{}:00'.format(hour), '{}:00'.format(hour))
                 for hour in range(
-                    int(str(kwargs['instance'].open_time)[:2]),
-                    int(str(kwargs['instance'].close_time)[:2])
+                    int(str(restaurant.open_time)[:2]),
+                    int(str(restaurant.close_time)[:2])
                 )
             ]
             self.fields['time'] = forms.ChoiceField(choices=choices_time)
@@ -27,7 +24,7 @@ class ReservationForm(forms.ModelForm):
         cleaned_data = super().clean()
         visitors = cleaned_data.get('visitors')
         table = cleaned_data.get('table')
-        if visitors > int(table):
+        if visitors > int(table.number_of_seats):
             raise forms.ValidationError(
                 'Visitors more than places on table',
                 code='invalid'

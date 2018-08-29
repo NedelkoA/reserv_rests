@@ -1,8 +1,16 @@
 {% extends "reservations/base.html" %}
 {% block title %}Reservations{% endblock %}
 {% block body %}
-    {% for restaurant in object_list %}
-        <a href="{% url 'make_reserve' restaurant.id %}">{{ restaurant }}</a>
-    {% endfor %}
+    {{ object_list }}
+    {{ user.profile.status_user }}
+    {% if user.profile.status_user == 'usr' %}
+        {% for restaurant in object_list %}
+            <a href="{% url 'user_reserve' restaurant.id %}">{{ restaurant }}</a>
+        {% endfor %}
+    {% else %}
+        {% for restaurant in object_list %}
+            <a href="{% url 'make_reserve' restaurant.id %}">{{ restaurant }}</a>
+        {% endfor %}
+    {% endif %}
 {% endblock %}
 

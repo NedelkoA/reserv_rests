@@ -3,6 +3,7 @@ from datetime import datetime
 from django.urls import reverse
 from django.views.generic import ListView, CreateView
 from django.http import JsonResponse, Http404
+from django.shortcuts import redirect
 
 from .models import Restaurant, Reservation
 from .forms import ReservationForm
@@ -18,10 +19,13 @@ class MakeReserve(CreateView):
     form_class = ReservationForm
     template_name = 'main/detail.html'
 
+    def get(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            return redirect(reverse('user_reserve', kwargs={'pk': kwargs['pk']}))
+        return super().get(request, args, kwargs)
+
     def form_valid(self, form):
-        print(self.kwargs['pk'])
         form.instance.restaurant = Restaurant.objects.get(id=self.kwargs['pk'])
-        print(form.instance.restaurant)
         return super().form_valid(form)
 
     def get_success_url(self, **kwargs):
@@ -29,7 +33,7 @@ class MakeReserve(CreateView):
 
     def get_form_kwargs(self):
         kw = super().get_form_kwargs()
-        kw['instance'] = Restaurant.objects.get(id=self.kwargs['pk'])
+        kw['restaurant'] = Restaurant.objects.get(id=self.kwargs['pk'])
         return kw
 
     def get_context_data(self, **kwargs):

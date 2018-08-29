@@ -17,6 +17,7 @@
                     <a href="{% url 'create_restaurant' %}">Add restaurant</a>
                 {% endif %}
                 <a href="{% url 'save_changes' %}">Profile</a>
+                <a href="{% url 'logout' %}">Logout</a>
             {% else %}
                 <a href="{% url 'sign_up' %}">Sign up</a>
                 <a href="{% url 'login' %}">Sign in</a>

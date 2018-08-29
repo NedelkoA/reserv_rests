@@ -122,6 +122,15 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static',)
 ]
 
+
+# Redis, celery
+
+REDIS_HOST = 'localhost'
+REDIS_PORT = '6379'
+BROKER_URL = 'redis://' + REDIS_HOST + ':' + REDIS_PORT
+CELERY_RESULT_BACKEND = 'redis://' + REDIS_HOST + ':' + REDIS_PORT
+
+
 try:
     from .local_settings import *
 except ImportError:
