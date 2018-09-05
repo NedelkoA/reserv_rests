@@ -23,4 +23,6 @@ urlpatterns = [
     url(r'^profile/', include('user_profile.urls')),
     url(r'^my_reservations/', include('users.urls')),
     url(r'^my_restaurant/', include('restaur_admin.urls')),
+    url(r'^api/', include('main.api.urls')),
+    url(r'^api/', include('user_profile.api.urls')),
 ]

@@ -1,7 +1,7 @@
 import telepot
 
 from user_profile.models import UserProfile
-from ..views import IntegrityError
+from django.db import IntegrityError
 
 TOKEN = '606061796:AAFsveXNHQ75CssfRwJbxH1LrSo8HG5SX84'
 bot = telepot.Bot(TOKEN)

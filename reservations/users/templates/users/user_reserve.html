@@ -8,6 +8,6 @@
         <button type="submit">Reserve</button>
     </form>
     {% for reserve in reservations %}
-        {{ reserve.reservations }} {{ reserve.pre_order }}<br>
+        {{ reserve.reservations }} {{ reserve.reservations.time }} {{ reserve.pre_order }}<br>
     {% endfor %}
 {% endblock %}

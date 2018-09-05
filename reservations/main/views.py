@@ -25,7 +25,15 @@ class MakeReserve(CreateView):
         return super().get(request, args, kwargs)
 
     def form_valid(self, form):
-        form.instance.restaurant = Restaurant.objects.get(id=self.kwargs['pk'])
+        restaurant = Restaurant.objects.get(id=self.kwargs['pk'])
+        if Reservation.objects.filter(
+            restaurant=restaurant,
+            table=form.cleaned_data['table'],
+            date=form.cleaned_data['date'],
+            time=form.cleaned_data['time']
+        ):
+            return redirect(reverse('make_reserve', kwargs={'pk': self.kwargs['pk']}))
+        form.instance.restaurant = restaurant
         return super().form_valid(form)
 
     def get_success_url(self, **kwargs):

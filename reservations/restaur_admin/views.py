@@ -2,10 +2,11 @@ from django.urls import reverse
 from django.shortcuts import redirect
 from django.views.generic import CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib import messages
 
 from main.models import Restaurant, User, Table
 from user_profile.models import UserProfile
-from .forms import TableFormset, TableForm
+from .forms import TableFormset, AddTableForm
 
 
 class AddRestaurantView(LoginRequiredMixin, CreateView):
@@ -26,6 +27,10 @@ class AddRestaurantView(LoginRequiredMixin, CreateView):
         return redirect(reverse('restaurants_list'))
 
     def form_valid(self, form):
+        if Restaurant.objects.filter(title=form.cleaned_data['title']):
+            messages.add_message(self.request, messages.INFO,
+                                 'This restaurant already is create.')
+            return redirect(reverse('create_restaurant'))
         form.instance.user = User.objects.get(id=self.request.user.id)
         restaurant = form.save()
         Table.objects.bulk_create([
@@ -73,7 +78,7 @@ class EditTableView(LoginRequiredMixin, UpdateView):
                 instance=obj
             )
         context['objects_list'] = Table.objects.filter(restaurant=obj)
-        context['add_form'] = TableForm()
+        context['add_form'] = AddTableForm()
         return context
 
     def get_success_url(self):

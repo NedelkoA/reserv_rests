@@ -1,14 +1,14 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from django.views.generic import CreateView
-from django.shortcuts import reverse
+from django.shortcuts import reverse, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db import IntegrityError
 
 from .models import UserReserve
 from .forms import UserReservationsForm
 from .tasks import send_notification
 from main.models import Restaurant, Reservation
+from .utils.date_converter import DateConversion
 
 
 class UserReservationView(LoginRequiredMixin, CreateView):
@@ -17,7 +17,15 @@ class UserReservationView(LoginRequiredMixin, CreateView):
     login_url = 'login'
 
     def form_valid(self, form):
-        form.instance.restaurant = Restaurant.objects.get(id=self.kwargs['pk'])
+        restaurant = Restaurant.objects.get(id=self.kwargs['pk'])
+        if Reservation.objects.filter(
+            restaurant=restaurant,
+            table=form.cleaned_data['table'],
+            date=form.cleaned_data['date'],
+            time=form.cleaned_data['time']
+        ):
+            return redirect(reverse('user_reserve', kwargs={'pk': self.kwargs['pk']}))
+        form.instance.restaurant = restaurant
         form.instance.contact_telephone = self.request.user.profile.telephone
         reservation = form.save()
         UserReserve.objects.create(
@@ -25,10 +33,11 @@ class UserReservationView(LoginRequiredMixin, CreateView):
             user=self.request.user,
             pre_order=form.cleaned_data['pre_order']
         )
+        reserve_time = DateConversion(reservation.date, reservation.time)
         send_notification.apply_async([
             self.request.user.profile.telegram_id,
             reservation.restaurant.title],
-            eta=datetime.now() + timedelta(hours=2)
+            eta=reserve_time.utc_time() - timedelta(hours=1)
         )
         return super().form_valid(form)
 
